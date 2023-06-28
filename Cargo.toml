@@ -1,0 +1,8 @@
+[package]
+name = "zstream-rs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+libc = "0.2.147"
+libz-sys = { version = "1.1.9", features = ["zlib-ng"] }
