@@ -7,8 +7,15 @@ use libz_sys::{
     inflate,
     inflateEnd,
     uInt,
-    voidpf
+    voidpf,
+    zlibVersion,
 };
+
+use log::{info, warn, error};
+use std::io::prelude::*;
+use std::io::Result;
+use std::fs::File;
+use std::ptr::null_mut;
 
 unsafe extern "C" fn zalloc(_: voidpf, n: uInt, c: uInt) -> voidpf {
     libc::calloc(n as usize, c as usize)
@@ -18,19 +25,16 @@ unsafe extern "C" fn zfree(_: voidpf, p: voidpf) {
     libc::free(p)
 }
 
-use std::io::prelude::*;
-use std::io::Result;
-use std::fs::File;
-use std::ptr::null_mut;
-
 struct Decoder {
     input: Box<dyn Read>,
     stream: z_stream,
+    initialized: bool,
 }
 
 impl Decoder {
     fn new(input: impl Read + 'static) -> Decoder {
         Decoder {
+            initialized: false,
             input: Box::new(input),
             stream: z_stream {
                 next_in: null_mut(),
@@ -58,6 +62,23 @@ impl Decoder {
 
 impl Read for Decoder {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        let mut inner_buf : [u8; 128] = [0; 128];
+        let bytes = match self.input.read(&mut inner_buf) {
+            Ok(bytes) => bytes,
+            Err(e) =>  { return Err(e); },
+        };
+
+        if !self.initialized {
+            self.stream.next_in = inner_buf.as_mut_ptr();
+            self.stream.avail_in = bytes as u32;
+            self.stream.next_out = buf.as_mut_ptr();
+            self.stream.avail_out = buf.len() as u32;
+            unsafe {
+                inflateInit2_(&mut self.stream as z_streamp, 16+15, zlibVersion(), 0);
+            }
+            self.initialized = true;
+        }
+
         Ok(0)
     }
 }

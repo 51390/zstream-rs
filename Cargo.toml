@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 libc = "0.2.147"
 libz-sys = { version = "1.1.9", features = ["zlib-ng"] }
+log = "0.4.19"
