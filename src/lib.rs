@@ -72,7 +72,7 @@ impl Decoder {
 impl Read for Decoder {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         let previous_out = self.stream.total_out;
-        let mut inner_buf : [u8; 64] = [0; 64];
+        let mut inner_buf : [u8; 1024] = [0; 1024];
         let bytes = match self.input.read(&mut inner_buf) {
             Ok(bytes) => bytes,
             Err(e) =>  { return Err(e); },
