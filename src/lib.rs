@@ -28,7 +28,7 @@ unsafe extern "C" fn zfree(_: voidpf, p: voidpf) {
     libc::free(p)
 }
 
-struct Decoder {
+pub struct Decoder {
     input: Box<dyn Read>,
     stream: z_stream,
     initialized: bool,
