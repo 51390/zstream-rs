@@ -33,10 +33,17 @@ pub struct Decoder {
     stream: z_stream,
     initialized: bool,
     is_done: bool,
+    buffer: Vec<u8>,
+    buffer_size: usize,
 }
 
 impl Decoder {
     pub fn new(input: impl Read + 'static) -> Decoder {
+        Self::new_with_size(input, 1024)
+    }
+
+    fn new_with_size(input: impl Read + 'static, size: usize) -> Decoder {
+        let buffer = Vec::<u8>::new();
         Decoder {
             initialized: false,
             input: Box::new(input),
@@ -57,6 +64,8 @@ impl Decoder {
                 reserved: 0,
             },
             is_done: false,
+            buffer_size: size,
+            buffer: vec!(0; size),
         }
     }
 
@@ -72,7 +81,7 @@ impl Decoder {
 impl Read for Decoder {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         let previous_out = self.stream.total_out;
-        let mut inner_buf : [u8; 1024] = [0; 1024];
+        let mut inner_buf = self.buffer.as_mut_slice();
         let bytes = match self.input.read(&mut inner_buf) {
             Ok(bytes) => bytes,
             Err(e) =>  { return Err(e); },
@@ -106,14 +115,14 @@ impl Read for Decoder {
             Ok((decompressed) as usize)
         } else {
             let error = match result {
-                libz_sys::Z_BUF_ERROR => "Z_BUFF_ERROR",
-                libz_sys::Z_MEM_ERROR => "Z_MEM_ERROR",
-                libz_sys::Z_STREAM_ERROR => "Z_STREAM_ERROR",
-                libz_sys::Z_NEED_DICT => "Z_BUFF_ERROR",
-                _ => "UNKNOWN",
+                libz_sys::Z_BUF_ERROR => "Z_BUFF_ERROR".to_owned(),
+                libz_sys::Z_MEM_ERROR => "Z_MEM_ERROR".to_owned(),
+                libz_sys::Z_STREAM_ERROR => "Z_STREAM_ERROR".to_owned(),
+                libz_sys::Z_NEED_DICT => "Z_BUFF_ERROR".to_owned(),
+                _ =>  format!("UNKNOWN; error code {}", result),
             };
 
-            Err(Error::new(ErrorKind::Other, format!("Failed inflating: {}", result)))
+            Err(Error::new(ErrorKind::Other, format!("Failed inflating: {}", error)))
         }
     }
 
