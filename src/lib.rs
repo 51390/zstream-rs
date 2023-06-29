@@ -36,7 +36,7 @@ pub struct Decoder {
 }
 
 impl Decoder {
-    fn new(input: impl Read + 'static) -> Decoder {
+    pub fn new(input: impl Read + 'static) -> Decoder {
         Decoder {
             initialized: false,
             input: Box::new(input),
@@ -60,11 +60,11 @@ impl Decoder {
         }
     }
 
-    fn stream(&mut self) -> &mut z_stream {
+    pub fn stream(&mut self) -> &mut z_stream {
         &mut self.stream
     }
 
-    fn is_done(&self) -> bool {
+    pub fn is_done(&self) -> bool {
         self.is_done
     }
 }
