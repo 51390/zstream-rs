@@ -40,7 +40,7 @@ pub struct Decoder {
 
 impl Decoder {
     pub fn new(input: impl Read + 'static) -> Decoder {
-        Self::new_with_size(input, 1024)
+        Self::new_with_size(input, 128)
     }
 
     pub fn new_with_size(input: impl Read + 'static, size: usize) -> Decoder {
@@ -108,7 +108,7 @@ impl Read for Decoder {
 
         if !self.initialized {
             self.initialized = Z_OK == unsafe {
-                inflateInit2_(&mut self.stream as z_streamp, 16+15, zlibVersion(), size_of::<z_stream>() as i32)
+                inflateInit2_(&mut self.stream as z_streamp, 32+15, zlibVersion(), size_of::<z_stream>() as i32)
             };
 
             if !self.initialized {
@@ -154,7 +154,7 @@ mod tests {
 
     #[test]
     fn test() {
-        let f = std::fs::OpenOptions::new().read(true).open("test/data/test.gz").unwrap();
+        let f = std::fs::OpenOptions::new().read(true).open("test/data/fb.gz").unwrap();
         let mut decoder = Decoder::new(f);
         let mut output = Vec::<u8>::new();
 
