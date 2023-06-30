@@ -42,7 +42,7 @@ impl Decoder {
         Self::new_with_size(input, 1024)
     }
 
-    fn new_with_size(input: impl Read + 'static, size: usize) -> Decoder {
+    pub fn new_with_size(input: impl Read + 'static, size: usize) -> Decoder {
         let buffer = Vec::<u8>::new();
         Decoder {
             initialized: false,
