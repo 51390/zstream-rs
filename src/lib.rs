@@ -1,5 +1,4 @@
 extern crate libc;
-
 use libz_sys::{
     z_stream,
     z_streamp,
@@ -14,7 +13,7 @@ use libz_sys::{
     Z_NO_FLUSH,
     Z_SYNC_FLUSH,
 };
-
+use log::info;
 use std::io::prelude::*;
 use std::io::{Result, Error, ErrorKind};
 use std::ptr::null_mut;
@@ -88,6 +87,7 @@ impl Read for Decoder {
         };
 
         if bytes == 0 {
+            info!("Got 0 bytes, short-circuiting.");
             return Ok(0);
         }
 
@@ -111,7 +111,7 @@ impl Read for Decoder {
         if Z_OK ==  result || Z_STREAM_END == result {
             self.is_done = Z_STREAM_END == result;
             let decompressed = self.stream.total_out - previous_out;
-            println!(">> Read {} bytes from file, decompressed {} bytes", bytes, decompressed);
+            info!(">> Read {} bytes from file, decompressed {} bytes", bytes, decompressed);
             Ok((decompressed) as usize)
         } else {
             let error = match result {
@@ -146,7 +146,7 @@ mod tests {
             match decoder.read(&mut buffer) {
                 Ok(bytes) => {
                     //:w
-                    //println!("Read: ||{}||", String::from_utf8(buffer[0..bytes].to_vec()).unwrap());
+                    //info!("Read: ||{}||", String::from_utf8(buffer[0..bytes].to_vec()).unwrap());
                     if bytes > 0 {
                         output.extend(&buffer[0..bytes]);
                     }
