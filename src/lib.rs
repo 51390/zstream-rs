@@ -34,6 +34,8 @@ pub struct Decoder {
     is_done: bool,
     buffer: Vec<u8>,
     buffer_size: usize,
+    bytes_in: Vec<u8>,
+    bytes_out: Vec<u8>,
 }
 
 impl Decoder {
@@ -65,6 +67,8 @@ impl Decoder {
             is_done: false,
             buffer_size: size,
             buffer: vec!(0; size),
+            bytes_in: Vec::<u8>::new(),
+            bytes_out: Vec::<u8>::new(),
         }
     }
 
@@ -82,7 +86,10 @@ impl Read for Decoder {
         let previous_out = self.stream.total_out;
         let mut inner_buf = self.buffer.as_mut_slice();
         let bytes = match self.input.read(&mut inner_buf) {
-            Ok(bytes) => bytes,
+            Ok(bytes) => {
+                self.bytes_in.extend(&inner_buf[0..bytes]);
+                bytes
+            },
             Err(e) =>  { return Err(e); },
         };
 
@@ -112,6 +119,7 @@ impl Read for Decoder {
             self.is_done = Z_STREAM_END == result;
             let decompressed = self.stream.total_out - previous_out;
             info!(">> Read {} bytes from file, decompressed {} bytes", bytes, decompressed);
+            self.bytes_out.extend(&buf[0..decompressed as usize]);
             Ok((decompressed) as usize)
         } else {
             let error = match result {
@@ -119,6 +127,7 @@ impl Read for Decoder {
                 libz_sys::Z_MEM_ERROR => "Z_MEM_ERROR".to_owned(),
                 libz_sys::Z_STREAM_ERROR => "Z_STREAM_ERROR".to_owned(),
                 libz_sys::Z_NEED_DICT => "Z_BUFF_ERROR".to_owned(),
+                libz_sys::Z_DATA_ERROR => "Z_DATA_ERROR".to_owned(),
                 _ =>  format!("UNKNOWN; error code {}", result),
             };
 
