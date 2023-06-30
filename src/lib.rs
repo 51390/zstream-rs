@@ -79,6 +79,14 @@ impl Decoder {
     pub fn is_done(&self) -> bool {
         self.is_done
     }
+
+    pub fn bytes_in(&self) -> &Vec<u8> {
+        &self.bytes_in
+    }
+
+    pub fn bytes_out(&self) -> &Vec<u8> {
+        &self.bytes_out
+    }
 }
 
 impl Read for Decoder {
