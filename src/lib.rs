@@ -7,7 +7,6 @@ pub use encoder::Encoder;
 
 #[cfg(test)]
 mod tests {
-    use iter_read::IterRead;
     use log::{info, warn, error};
     use std::fs::{OpenOptions};
     use std::io::prelude::*;

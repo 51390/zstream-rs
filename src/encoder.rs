@@ -79,8 +79,8 @@ impl Encoder {
     pub fn bytes_out(&self) -> &Vec<u8> {
         &self.bytes_out
     }
-
     pub fn finish(&mut self, buf: &mut [u8]) -> Result<usize> {
+
         self.finish = true;
         self.read(buf)
     }
@@ -137,10 +137,10 @@ impl Read for Encoder {
 
         if Z_OK ==  result || Z_STREAM_END == result {
             self.is_done = Z_STREAM_END == result;
-            let decompressed = self.stream.total_out - previous_out;
-            info!(">> Read {} bytes from file, decompressed {} bytes", bytes, decompressed);
-            self.bytes_out.extend(&buf[0..decompressed as usize]);
-            Ok((decompressed) as usize)
+            let compressed = self.stream.total_out - previous_out;
+            info!(">> Read {} bytes from file, compressed {} bytes", bytes, compressed);
+            self.bytes_out.extend(&buf[0..compressed as usize]);
+            Ok((compressed) as usize)
         } else {
             let error = match result {
                 libz_sys::Z_BUF_ERROR => "Z_BUFF_ERROR".to_owned(),
@@ -151,7 +151,7 @@ impl Read for Encoder {
                 _ =>  format!("UNKNOWN; error code {}", result),
             };
 
-            Err(Error::new(ErrorKind::Other, format!("Failed inflating: {}", error)))
+            Err(Error::new(ErrorKind::Other, format!("Failed deflating: {}", error)))
         }
     }
 
