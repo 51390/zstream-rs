@@ -21,6 +21,7 @@ pub struct Encoder {
     input: Box<dyn Read>,
     stream: z_stream,
     initialized: bool,
+    finish: bool,
     is_done: bool,
     buffer: Vec<u8>,
     buffer_size: usize,
@@ -54,6 +55,7 @@ impl Encoder {
                 adler: 0,
                 reserved: 0,
             },
+            finish: false,
             is_done: false,
             buffer_size: size,
             buffer: vec!(0; size),
@@ -78,7 +80,9 @@ impl Encoder {
         &self.bytes_out
     }
 
-    pub fn end(&self) {
+    pub fn finish(&mut self, buf: &mut [u8]) -> Result<usize> {
+        self.finish = true;
+        self.read(buf)
     }
 }
 
@@ -94,9 +98,8 @@ impl Read for Encoder {
             Err(e) =>  { return Err(e); },
         };
 
-        if bytes == 0 {
-            info!("Got 0 bytes, short-circuiting.");
-            self.is_done = true;
+        if bytes == 0  && !self.finish {
+            return Ok(0)
         }
 
         if !self.initialized {
@@ -118,7 +121,7 @@ impl Read for Encoder {
         }
 
         let flush = {
-            if self.is_done {
+            if self.finish {
                 Z_FINISH
             } else {
                 Z_SYNC_FLUSH
