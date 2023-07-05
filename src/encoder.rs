@@ -101,7 +101,7 @@ impl Read for Encoder {
             self.initialized = Z_OK == unsafe {
                 deflateInit2_(
                     &mut self.stream as z_streamp,
-                    9, // level
+                    1, // level
                     8, // method, Z_DEFLATED
                     31, // window bits, 15 = 2ˆ15 window size + gzip headers (16)
                     9, // mem level, MAX_MEM_LEVEL
