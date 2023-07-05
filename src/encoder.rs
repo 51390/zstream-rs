@@ -1,4 +1,3 @@
-use log::info;
 use std::io::prelude::*;
 use std::io::{Result, Error, ErrorKind};
 use std::ptr::null_mut;
@@ -133,7 +132,6 @@ impl Read for Encoder {
         if Z_OK ==  result || Z_STREAM_END == result {
             self.is_done = Z_STREAM_END == result;
             let compressed = self.stream.total_out - previous_out;
-            info!(">> Read {} bytes from file, compressed {} bytes", bytes, compressed);
             self.bytes_out.extend(&buf[0..compressed as usize]);
             Ok((compressed) as usize)
         } else {
