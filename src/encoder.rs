@@ -8,12 +8,10 @@ use libz_sys::{
     z_streamp,
     deflateInit2_,
     deflate,
-    //deflateEnd,
     zlibVersion,
     Z_OK,
     Z_STREAM_END,
-    //Z_NO_FLUSH,
-    Z_SYNC_FLUSH,
+    Z_NO_FLUSH,
     Z_FINISH,
 };
 
@@ -121,7 +119,7 @@ impl Read for Encoder {
             if self.finish {
                 Z_FINISH
             } else {
-                Z_SYNC_FLUSH
+                Z_NO_FLUSH
             }
         };
 

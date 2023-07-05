@@ -8,12 +8,10 @@ use libz_sys::{
     z_streamp,
     inflateInit2_,
     inflate,
-    //inflateEnd,
     zlibVersion,
     Z_OK,
     Z_STREAM_END,
-    //Z_NO_FLUSH,
-    Z_SYNC_FLUSH,
+    Z_NO_FLUSH,
 };
 
 pub struct Decoder {
@@ -107,7 +105,7 @@ impl Read for Decoder {
         self.stream.next_out = buf.as_mut_ptr();
         self.stream.avail_out = buf.len() as u32;
 
-        let result = unsafe { inflate(&mut self.stream as z_streamp, Z_SYNC_FLUSH) };
+        let result = unsafe { inflate(&mut self.stream as z_streamp, Z_NO_FLUSH) };
 
         if Z_OK ==  result || Z_STREAM_END == result {
             self.is_done = Z_STREAM_END == result;
