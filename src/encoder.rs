@@ -12,7 +12,7 @@ use libz_sys::{
     zlibVersion,
     Z_OK,
     Z_STREAM_END,
-    Z_NO_FLUSH,
+    //Z_NO_FLUSH,
     Z_SYNC_FLUSH,
     Z_FINISH,
 };
@@ -24,7 +24,6 @@ pub struct Encoder {
     finish: bool,
     is_done: bool,
     buffer: Vec<u8>,
-    buffer_size: usize,
     bytes_in: Vec<u8>,
     bytes_out: Vec<u8>,
 }
@@ -35,7 +34,6 @@ impl Encoder {
     }
 
     pub fn new_with_size(input: impl Read + 'static, size: usize) -> Encoder {
-        let buffer = Vec::<u8>::new();
         Encoder {
             initialized: false,
             input: Box::new(input),
@@ -57,7 +55,6 @@ impl Encoder {
             },
             finish: false,
             is_done: false,
-            buffer_size: size,
             buffer: vec!(0; size),
             bytes_in: Vec::<u8>::new(),
             bytes_out: Vec::<u8>::new(),

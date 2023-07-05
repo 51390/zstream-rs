@@ -7,19 +7,10 @@ pub use encoder::Encoder;
 
 #[cfg(test)]
 mod tests {
-    use log::{info, warn, error};
+    use log::{error};
     use std::fs::{OpenOptions};
     use std::io::prelude::*;
-    use std::sync::Once;
     use super::*;
-
-    static SETUP: Once = Once::new();
-
-    fn setup () {
-        SETUP.call_once(|| {
-            env_logger::init();
-        });
-    }
 
     #[test]
     fn test_decoder() {
@@ -31,8 +22,6 @@ mod tests {
             let mut buffer : [u8;1024 * 1024] = [0; 1024 * 1024];
             match decoder.read(&mut buffer) {
                 Ok(bytes) => {
-                    //:w
-                    //info!("Read: ||{}||", String::from_utf8(buffer[0..bytes].to_vec()).unwrap());
                     if bytes > 0 {
                         output.extend(&buffer[0..bytes]);
                     }
@@ -116,7 +105,7 @@ mod tests {
             }
         }
 
-        let mut input: [u8; 5] = [1, 2, 3, 4, 5];
+        let input: [u8; 5] = [1, 2, 3, 4, 5];
         let mut output = Vec::<u8>::new();
         let mut encoder = Encoder::new(TestReader { test_data: input.to_vec() });
         let mut buffer : [u8;1024 * 1024] = [0; 1024 * 1024];
@@ -153,7 +142,7 @@ mod tests {
             }
         }
 
-        let mut encoded = TestReader { test_data: output.to_vec() };
+        let encoded = TestReader { test_data: output.to_vec() };
         let mut decoder = Decoder::new(encoded);
         output.clear();
 
@@ -161,8 +150,6 @@ mod tests {
             let mut buffer : [u8;1024 * 1024] = [0; 1024 * 1024];
             match decoder.read(&mut buffer) {
                 Ok(bytes) => {
-                    //:w
-                    //info!("Read: ||{}||", String::from_utf8(buffer[0..bytes].to_vec()).unwrap());
                     if bytes > 0 {
                         output.extend(&buffer[0..bytes]);
                     }

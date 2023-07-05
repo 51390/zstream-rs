@@ -12,7 +12,7 @@ use libz_sys::{
     zlibVersion,
     Z_OK,
     Z_STREAM_END,
-    Z_NO_FLUSH,
+    //Z_NO_FLUSH,
     Z_SYNC_FLUSH,
 };
 
@@ -22,7 +22,6 @@ pub struct Decoder {
     initialized: bool,
     is_done: bool,
     buffer: Vec<u8>,
-    buffer_size: usize,
     bytes_in: Vec<u8>,
     bytes_out: Vec<u8>,
 }
@@ -33,7 +32,6 @@ impl Decoder {
     }
 
     pub fn new_with_size(input: impl Read + 'static, size: usize) -> Decoder {
-        let buffer = Vec::<u8>::new();
         Decoder {
             initialized: false,
             input: Box::new(input),
@@ -54,7 +52,6 @@ impl Decoder {
                 reserved: 0,
             },
             is_done: false,
-            buffer_size: size,
             buffer: vec!(0; size),
             bytes_in: Vec::<u8>::new(),
             bytes_out: Vec::<u8>::new(),
