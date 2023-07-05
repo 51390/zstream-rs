@@ -1,4 +1,3 @@
-use log::info;
 use std::io::prelude::*;
 use std::io::{Result, Error, ErrorKind};
 use std::ptr::null_mut;
@@ -75,6 +74,10 @@ impl Decoder {
 
 impl Read for Decoder {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        if self.is_done {
+            return Ok(0);
+        }
+
         let previous_out = self.stream.total_out;
         let mut inner_buf = self.buffer.as_mut_slice();
         let bytes = match self.input.read(&mut inner_buf) {
@@ -86,7 +89,6 @@ impl Read for Decoder {
         };
 
         if bytes == 0 {
-            info!("Got 0 bytes, short-circuiting.");
             return Ok(0);
         }
 
@@ -110,7 +112,6 @@ impl Read for Decoder {
         if Z_OK ==  result || Z_STREAM_END == result {
             self.is_done = Z_STREAM_END == result;
             let decompressed = self.stream.total_out - previous_out;
-            info!(">> Read {} bytes from file, decompressed {} bytes", bytes, decompressed);
             self.bytes_out.extend(&buf[0..decompressed as usize]);
             Ok((decompressed) as usize)
         } else {
