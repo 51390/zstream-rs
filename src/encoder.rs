@@ -1,5 +1,6 @@
 use std::io::prelude::*;
 use std::io::{Result, Error, ErrorKind};
+use std::ops::Drop;
 use std::ptr::null_mut;
 use std::mem::size_of;
 use libz_sys::{
@@ -7,6 +8,7 @@ use libz_sys::{
     z_streamp,
     deflateInit2_,
     deflate,
+    deflateEnd,
     zlibVersion,
     Z_OK,
     Z_STREAM_END,
@@ -76,7 +78,23 @@ impl Encoder {
 
     pub fn finish(&mut self, buf: &mut [u8]) -> Result<usize> {
         self.finish = true;
-        self.read(buf)
+        let result = self.read(buf);
+        self.cleanup();
+        self.is_done = true;
+        result
+    }
+
+    pub fn cleanup(&mut self) {
+        if self.initialized {
+            unsafe { deflateEnd(&mut self.stream as z_streamp) };
+        }
+        self.initialized = false;
+    }
+}
+
+impl Drop for Encoder {
+    fn drop(&mut self) {
+        self.cleanup();
     }
 }
 

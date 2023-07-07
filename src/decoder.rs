@@ -7,6 +7,7 @@ use libz_sys::{
     z_streamp,
     inflateInit2_,
     inflate,
+    inflateEnd,
     zlibVersion,
     Z_OK,
     Z_STREAM_END,
@@ -70,8 +71,26 @@ impl Decoder {
     pub fn bytes_out(&self) -> &Vec<u8> {
         &self.bytes_out
     }
+
+    pub fn finish(&mut self) -> Result<usize> {
+        self.is_done = true;
+        self.cleanup();
+        Ok(0)
+    }
+
+    pub fn cleanup(&mut self) {
+        if self.initialized {
+            unsafe { inflateEnd(&mut self.stream as z_streamp) };
+        }
+        self.initialized = false;
+    }
 }
 
+impl Drop for Decoder {
+    fn drop(&mut self) {
+        self.cleanup();
+    }
+}
 impl Read for Decoder {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         if self.is_done {
@@ -127,7 +146,6 @@ impl Read for Decoder {
             Err(Error::new(ErrorKind::Other, format!("Failed inflating: {}", error)))
         }
     }
-
 }
 
 
