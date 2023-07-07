@@ -73,8 +73,8 @@ impl Encoder {
     pub fn bytes_out(&self) -> &Vec<u8> {
         &self.bytes_out
     }
-    pub fn finish(&mut self, buf: &mut [u8]) -> Result<usize> {
 
+    pub fn finish(&mut self, buf: &mut [u8]) -> Result<usize> {
         self.finish = true;
         self.read(buf)
     }
@@ -147,5 +147,4 @@ impl Read for Encoder {
             Err(Error::new(ErrorKind::Other, format!("Failed deflating: {}", error)))
         }
     }
-
 }
