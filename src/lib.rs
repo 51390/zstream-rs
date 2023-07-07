@@ -108,7 +108,7 @@ mod tests {
         let input: [u8; 5] = [1, 2, 3, 4, 5];
         let mut output = Vec::<u8>::new();
         let mut encoder = Encoder::new(TestReader { test_data: input.to_vec() });
-        let mut buffer : [u8;1024 * 1024] = [0; 1024 * 1024];
+        let mut buffer : [u8; 128 * 1024] = [0; 128 * 1024];
 
         loop {
             match encoder.read(&mut buffer) {
@@ -147,7 +147,7 @@ mod tests {
         output.clear();
 
         loop {
-            let mut buffer : [u8;1024 * 1024] = [0; 1024 * 1024];
+            let mut buffer : [u8; 128 * 1024] = [0; 128 * 1024];
             match decoder.read(&mut buffer) {
                 Ok(bytes) => {
                     if bytes > 0 {
