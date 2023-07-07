@@ -4,7 +4,7 @@ A flexible implementation of gzip stream decoder/encoder for Rust.
 ## Why
 
 Some encoder/decoder crates that provide Read Traits exhibit a behavior of _eagerly_ trying to consume stream data from the underlying readers that are passed to them.
-For use cases where the underlying stream data is not fully available for encoding/decoding immediately, this may lead to such implementations breaking with "corrupt deflate stream" errors or similar.
+For use cases where the underlying stream data is not fully -- or not at all -- available for encoding/decoding immediately, this may lead to such implementations breaking with "corrupt deflate stream" errors or similar.
 
 ## How
 
