@@ -9,4 +9,4 @@ For use cases where the underlying stream data is not fully -- or not at all -- 
 ## How
 
 This create makes no assumptions about the underlying stream data availability, and will not call the libz functions for neither inflating nor deflating streaming data unless there are new bytes available for such.
-This allows a better flow control of the encoding / decoding process, in such cases where data may take a longer time to reach the component that is performing the inflate / deflate process.
+This allows a better flow control of the encoding / decoding process, in such cases where data may take a longer time to reach the component that is performing it.
