@@ -90,14 +90,16 @@ mod tests {
 
         struct TestReader {
             test_data: Vec<u8>,
+            cursor: usize,
         }
 
         impl Read for TestReader {
             fn read(&mut self, buf: &mut [u8]) -> std::io::Result<usize> {
-                let n = self.test_data.len();
+                let n = std::cmp::min(buf.len(), self.test_data.len() - self.cursor);
                 if n > 0 {
-                    buf[0..n].copy_from_slice(&self.test_data[0..n]);
-                    self.test_data.clear();
+                    buf[0..n].copy_from_slice(&self.test_data[self.cursor..self.cursor + n]);
+                    self.cursor += n;
+                    println!("{} bytes from test data consumed, cursor is now at {}. Total {} bytes.", n, self.cursor, self.test_data.len());
                     Ok(n)
                 } else {
                     Ok(0)
@@ -105,12 +107,15 @@ mod tests {
             }
         }
 
-        let input: [u8; 5] = [1, 2, 3, 4, 5];
+        let input: Vec<u8> = vec!(0; 256);
         let mut output = Vec::<u8>::new();
-        let mut encoder = Encoder::new(TestReader { test_data: input.to_vec() });
+        let mut encoder = Encoder::new(TestReader { test_data: input.clone(), cursor: 0 });
         let mut buffer : [u8; 128 * 1024] = [0; 128 * 1024];
 
         loop {
+            // FIXME: improve this loop by not assuming the encoder will only
+            // return 0 bytes at the end of the stream. It may return 0 bytes
+            // prior to having finished consumeing the input buffer.
             match encoder.read(&mut buffer) {
                 Ok(bytes) => {
                     if bytes > 0 {
@@ -132,6 +137,7 @@ mod tests {
 
         match encoder.finish(&mut buffer)  {
             Ok(bytes) => {
+                println!("Encoded {} bytes (finish).", bytes);
                 if bytes > 0 {
                     output.extend(&buffer[0..bytes]);
                 }
@@ -142,14 +148,16 @@ mod tests {
             }
         }
 
-        let encoded = TestReader { test_data: output.to_vec() };
+        println!("Output buffer len: {}", output.len());
+
+        let encoded = TestReader { test_data: output.clone(), cursor: 0 };
         let mut decoder = Decoder::new(encoded);
         output.clear();
 
         loop {
-            let mut buffer : [u8; 128 * 1024] = [0; 128 * 1024];
             match decoder.read(&mut buffer) {
                 Ok(bytes) => {
+                    println!("Decoded {} bytes.", bytes);
                     if bytes > 0 {
                         output.extend(&buffer[0..bytes]);
                     }
@@ -165,6 +173,7 @@ mod tests {
             }
         }
 
-        assert_eq!(input.to_vec(), output);
+        assert_eq!(input.len(), output.len());
+        assert_eq!(input, output);
     }
 }
