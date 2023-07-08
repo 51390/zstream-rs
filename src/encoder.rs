@@ -25,6 +25,7 @@ pub struct Encoder {
     buffer: Vec<u8>,
     bytes_in: Vec<u8>,
     bytes_out: Vec<u8>,
+    clean: bool,
 }
 
 impl Encoder {
@@ -57,6 +58,7 @@ impl Encoder {
             buffer: vec!(0; size),
             bytes_in: Vec::<u8>::new(),
             bytes_out: Vec::<u8>::new(),
+            clean: false,
         }
     }
 
@@ -85,10 +87,11 @@ impl Encoder {
     }
 
     pub fn cleanup(&mut self) {
-        if self.initialized {
+        if self.initialized  && !self.clean {
             unsafe { deflateEnd(&mut self.stream as z_streamp) };
         }
         self.initialized = false;
+        self.clean = true;
     }
 }
 
@@ -100,6 +103,9 @@ impl Drop for Encoder {
 
 impl Read for Encoder {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        if self.clean {
+            return Err(Error::new(ErrorKind::Other, "Finished, clean."));
+        }
         let previous_out = self.stream.total_out;
         let mut inner_buf = self.buffer.as_mut_slice();
         let bytes = match self.input.read(&mut inner_buf) {
