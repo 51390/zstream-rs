@@ -79,7 +79,7 @@ impl Encoder {
     pub fn finish(&mut self, buf: &mut [u8]) -> Result<usize> {
         self.finish = true;
         let result = self.read(buf);
-        //self.cleanup();
+        self.cleanup();
         self.is_done = true;
         result
     }
