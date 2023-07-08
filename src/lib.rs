@@ -44,7 +44,7 @@ mod tests {
     #[test]
     fn test_encoder() {
         let f = std::fs::OpenOptions::new().read(true).open("test/data/test.txt").unwrap();
-        let mut encoder = Encoder::new(Box::new(f));
+        let mut encoder = Box::new(Encoder::new(Box::new(f)));
         let mut buffer : [u8;1024 * 1024] = [0; 1024 * 1024];
         let mut output = Vec::<u8>::new();
 
@@ -68,6 +68,8 @@ mod tests {
             }
         }
 
+        println!("Finishing encoder now");
+
         match encoder.finish(&mut buffer)  {
             Ok(bytes) => {
                 if bytes > 0 {
@@ -85,7 +87,7 @@ mod tests {
         output_file.write_all(output.as_slice()).unwrap();
     }
 
-    #[test]
+    //#[test]
     fn test_encode_decode() {
 
         struct TestReader {

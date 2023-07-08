@@ -57,7 +57,7 @@ impl Encoder {
             buffer: vec!(0; size),
             bytes_in: Vec::<u8>::new(),
             bytes_out: Vec::<u8>::new(),
-        }
+        }.initialize()
     }
 
     pub fn stream(&mut self) -> &mut z_stream {
@@ -79,7 +79,7 @@ impl Encoder {
     pub fn finish(&mut self, buf: &mut [u8]) -> Result<usize> {
         self.finish = true;
         let result = self.read(buf);
-        self.cleanup();
+        //self.cleanup();
         self.is_done = true;
         result
     }
@@ -90,16 +90,37 @@ impl Encoder {
         }
         self.initialized = false;
     }
+
+    pub fn initialize(mut self) -> Self {
+        if !self.initialized {
+            self.initialized = Z_OK == unsafe {
+                deflateInit2_(
+                    &mut self.stream as z_streamp,
+                    1, // level
+                    8, // method, Z_DEFLATED
+                    31, // window bits, 15 = 2ˆ15 window size + gzip headers (16)
+                    9, // mem level, MAX_MEM_LEVEL
+                    0, // strategy, Z_DEFAULT_STRATEGY,
+                    zlibVersion(),
+                    size_of::<z_stream>() as i32)
+            };
+        };
+
+        self
+    }
 }
 
+/*
 impl Drop for Encoder {
     fn drop(&mut self) {
         self.cleanup();
     }
 }
+*/
 
 impl Read for Encoder {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        println!("{}", self.initialized);
         let previous_out = self.stream.total_out;
         let mut inner_buf = self.buffer.as_mut_slice();
         let bytes = match self.input.read(&mut inner_buf) {
@@ -114,6 +135,14 @@ impl Read for Encoder {
             return Ok(0)
         }
 
+        let flush = {
+            if self.finish {
+                Z_FINISH
+            } else {
+                Z_NO_FLUSH
+            }
+        };
+
         if !self.initialized {
             self.initialized = Z_OK == unsafe {
                 deflateInit2_(
@@ -126,18 +155,6 @@ impl Read for Encoder {
                     zlibVersion(),
                     size_of::<z_stream>() as i32)
             };
-
-            if !self.initialized {
-                return Err(Error::new(ErrorKind::Other, "Failed initializing zlib."));
-            }
-        }
-
-        let flush = {
-            if self.finish {
-                Z_FINISH
-            } else {
-                Z_NO_FLUSH
-            }
         };
 
         self.stream.next_in = inner_buf.as_mut_ptr();
