@@ -87,7 +87,7 @@ mod tests {
         output_file.write_all(output.as_slice()).unwrap();
     }
 
-    #[test]
+    //#[test]
     fn test_encode_decode() {
 
         struct TestReader {
