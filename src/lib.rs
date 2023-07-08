@@ -14,7 +14,7 @@ mod tests {
 
     #[test]
     fn test_decoder() {
-        let f = std::fs::OpenOptions::new().read(true).open("test/data/main.js.gz").unwrap();
+        let f = std::fs::OpenOptions::new().read(true).open("test/data/test.gz").unwrap();
         let mut decoder = Decoder::new(f);
         let mut output = Vec::<u8>::new();
 
