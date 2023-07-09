@@ -13,6 +13,7 @@ use libz_sys::{
     Z_STREAM_END,
     Z_NO_FLUSH,
 };
+use log::info;
 
 pub struct Decoder {
     input: Box<dyn Read>,
@@ -88,6 +89,7 @@ impl Decoder {
 
 impl Drop for Decoder {
     fn drop(&mut self) {
+        info!("Decoder cleaning up");
         self.cleanup();
     }
 }
