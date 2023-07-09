@@ -87,6 +87,7 @@ impl Encoder {
     pub fn cleanup(&mut self) {
         info!("Encoder cleaning up");
         if self.initialized  {
+            info!("Deflate end called.");
             unsafe { deflateEnd(&mut self.stream as z_streamp) };
         }
         self.initialized = false;
