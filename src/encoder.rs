@@ -146,20 +146,6 @@ impl Read for Encoder {
             }
         };
 
-        if !self.initialized {
-            self.initialized = Z_OK == unsafe {
-                deflateInit2_(
-                    &mut *self.stream as z_streamp,
-                    1, // level
-                    8, // method, Z_DEFLATED
-                    31, // window bits, 15 = 2ˆ15 window size + gzip headers (16)
-                    9, // mem level, MAX_MEM_LEVEL
-                    0, // strategy, Z_DEFAULT_STRATEGY,
-                    zlibVersion(),
-                    size_of::<z_stream>() as i32)
-            };
-        };
-
         self.stream.next_in = inner_buf.as_mut_ptr();
         self.stream.avail_in = bytes as u32;
         self.stream.next_out = buf.as_mut_ptr();
