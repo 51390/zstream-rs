@@ -129,6 +129,7 @@ impl Read for Encoder {
         let bytes = match self.input.read(&mut inner_buf) {
             Ok(bytes) => {
                 self.bytes_in.extend(&inner_buf[0..bytes]);
+                println!("Read {} bytes", bytes);
                 bytes
             },
             Err(e) =>  { return Err(e); },
@@ -140,8 +141,10 @@ impl Read for Encoder {
 
         let flush = {
             if self.finish {
+                println!("Z_FINISH");
                 Z_FINISH
             } else {
+                println!("Z_NO_FLUSH");
                 Z_NO_FLUSH
             }
         };
