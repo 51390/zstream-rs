@@ -18,7 +18,7 @@ use libz_sys::{
 
 pub struct Encoder {
     input: Box<dyn Read>,
-    stream: z_stream,
+    stream: Box<z_stream>,
     initialized: bool,
     finish: bool,
     is_done: bool,
@@ -36,7 +36,7 @@ impl Encoder {
         Encoder {
             initialized: false,
             input: Box::new(input),
-            stream: z_stream {
+            stream: Box::new(z_stream {
                 next_in: null_mut(),
                 avail_in: 0,
                 total_in: 0,
@@ -51,7 +51,7 @@ impl Encoder {
                 data_type: 0,
                 adler: 0,
                 reserved: 0,
-            },
+            }),
             finish: false,
             is_done: false,
             buffer: vec!(0; size),
@@ -86,7 +86,7 @@ impl Encoder {
 
     pub fn cleanup(&mut self) {
         if self.initialized {
-            unsafe { deflateEnd(&mut self.stream as z_streamp) };
+            unsafe { deflateEnd(&mut *self.stream as z_streamp) };
         }
         self.initialized = false;
     }
@@ -95,7 +95,7 @@ impl Encoder {
         if !self.initialized {
             self.initialized = Z_OK == unsafe {
                 deflateInit2_(
-                    &mut self.stream as z_streamp,
+                    &mut *self.stream as z_streamp,
                     1, // level
                     8, // method, Z_DEFLATED
                     31, // window bits, 15 = 2ˆ15 window size + gzip headers (16)
@@ -126,6 +126,7 @@ impl Read for Encoder {
         let bytes = match self.input.read(&mut inner_buf) {
             Ok(bytes) => {
                 self.bytes_in.extend(&inner_buf[0..bytes]);
+                println!("Read {} bytes", bytes);
                 bytes
             },
             Err(e) =>  { return Err(e); },
@@ -137,8 +138,10 @@ impl Read for Encoder {
 
         let flush = {
             if self.finish {
+                println!("Z_FINISH");
                 Z_FINISH
             } else {
+                println!("Z_NO_FLUSH");
                 Z_NO_FLUSH
             }
         };
@@ -146,7 +149,7 @@ impl Read for Encoder {
         if !self.initialized {
             self.initialized = Z_OK == unsafe {
                 deflateInit2_(
-                    &mut self.stream as z_streamp,
+                    &mut *self.stream as z_streamp,
                     1, // level
                     8, // method, Z_DEFLATED
                     31, // window bits, 15 = 2ˆ15 window size + gzip headers (16)
@@ -162,7 +165,8 @@ impl Read for Encoder {
         self.stream.next_out = buf.as_mut_ptr();
         self.stream.avail_out = buf.len() as u32;
 
-        let result = unsafe { deflate(&mut self.stream as z_streamp, flush) };
+        println!("Read {} bytes, avail in  {}. {} avail out", bytes, self.stream.avail_in, self.stream.avail_out);
+        let result = unsafe { deflate(&mut *self.stream as z_streamp, flush) };
 
         if Z_OK ==  result || Z_STREAM_END == result {
             self.is_done = Z_STREAM_END == result;
