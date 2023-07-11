@@ -120,13 +120,11 @@ impl Drop for Encoder {
 
 impl Read for Encoder {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        println!("{}", self.initialized);
         let previous_out = self.stream.total_out;
         let mut inner_buf = self.buffer.as_mut_slice();
         let bytes = match self.input.read(&mut inner_buf) {
             Ok(bytes) => {
                 self.bytes_in.extend(&inner_buf[0..bytes]);
-                println!("Read {} bytes", bytes);
                 bytes
             },
             Err(e) =>  { return Err(e); },
@@ -138,10 +136,8 @@ impl Read for Encoder {
 
         let flush = {
             if self.finish {
-                println!("Z_FINISH");
                 Z_FINISH
             } else {
-                println!("Z_NO_FLUSH");
                 Z_NO_FLUSH
             }
         };
