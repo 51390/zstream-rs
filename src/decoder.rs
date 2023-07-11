@@ -17,7 +17,7 @@ use log::info;
 
 pub struct Decoder {
     input: Box<dyn Read>,
-    stream: z_stream,
+    stream: Box<z_stream>,
     initialized: bool,
     is_done: bool,
     buffer: Vec<u8>,
@@ -34,7 +34,7 @@ impl Decoder {
         Decoder {
             initialized: false,
             input: Box::new(input),
-            stream: z_stream {
+            stream: Box::new(z_stream {
                 next_in: null_mut(),
                 avail_in: 0,
                 total_in: 0,
@@ -49,12 +49,12 @@ impl Decoder {
                 data_type: 0,
                 adler: 0,
                 reserved: 0,
-            },
+            }),
             is_done: false,
             buffer: vec!(0; size),
             bytes_in: Vec::<u8>::new(),
             bytes_out: Vec::<u8>::new(),
-        }
+        }.initialize()
     }
 
     pub fn stream(&mut self) -> &mut z_stream {
@@ -81,9 +81,19 @@ impl Decoder {
 
     pub fn cleanup(&mut self) {
         if self.initialized {
-            unsafe { inflateEnd(&mut self.stream as z_streamp) };
+            unsafe { inflateEnd(&mut *self.stream as z_streamp) };
         }
         self.initialized = false;
+    }
+
+    pub fn initialize(mut self) -> Self {
+        if !self.initialized {
+            self.initialized = Z_OK == unsafe {
+                inflateInit2_(&mut *self.stream as z_streamp, 32+15, zlibVersion(), size_of::<z_stream>() as i32)
+            };
+        };
+
+        self
     }
 }
 
@@ -113,22 +123,13 @@ impl Read for Decoder {
             return Ok(0);
         }
 
-        if !self.initialized {
-            self.initialized = Z_OK == unsafe {
-                inflateInit2_(&mut self.stream as z_streamp, 32+15, zlibVersion(), size_of::<z_stream>() as i32)
-            };
-
-            if !self.initialized {
-                return Err(Error::new(ErrorKind::Other, "Failed initializing zlib."));
-            }
-        }
 
         self.stream.next_in = inner_buf.as_mut_ptr();
         self.stream.avail_in = bytes as u32;
         self.stream.next_out = buf.as_mut_ptr();
         self.stream.avail_out = buf.len() as u32;
 
-        let result = unsafe { inflate(&mut self.stream as z_streamp, Z_NO_FLUSH) };
+        let result = unsafe { inflate(&mut *self.stream as z_streamp, Z_NO_FLUSH) };
 
         if Z_OK ==  result || Z_STREAM_END == result {
             self.is_done = Z_STREAM_END == result;
