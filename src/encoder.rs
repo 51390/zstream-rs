@@ -80,7 +80,6 @@ impl Encoder {
     pub fn finish(&mut self, buf: &mut [u8]) -> Result<usize> {
         self.finish = true;
         let result = self.read(buf);
-        self.cleanup();
         self.is_done = true;
         result
     }
@@ -113,13 +112,11 @@ impl Encoder {
     }
 }
 
-/*
 impl Drop for Encoder {
     fn drop(&mut self) {
         self.cleanup();
     }
 }
-*/
 
 impl Read for Encoder {
     fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
