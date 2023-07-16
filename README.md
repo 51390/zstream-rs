@@ -8,7 +8,7 @@ For use cases where the underlying stream data is not fully -- or not at all -- 
 
 ## How
 
-This create makes no assumptions about the underlying stream data availability, and will not call the libz functions for neither inflating nor deflating streaming data unless there are new bytes available for such.
+This crate makes no assumptions about the underlying stream data availability, and will not call the libz functions for neither inflating nor deflating streaming data unless there are new bytes available for such.
 This allows a better flow control of the encoding / decoding process, in such cases where data may take a longer time to reach the component that is performing it.
 
 One side-effect of the above, however, is that the Encoder implementaion requires an explicit notification about when the stream has ended, as it is not able to tell just by reading 0 bytes from the underlying stream.
