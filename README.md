@@ -1,4 +1,4 @@
-# zstream-rs ![Tests](https://github.com/51390/zstream-rs/actions/workflows/Rust.yml/badge.svg)
+# zstream-rs ![Tests](https://github.com/51390/zstream-rs/actions/workflows/tests.yml/badge.svg)
 
 A flexible implementation of gzip stream decoder/encoder for Rust.
 
