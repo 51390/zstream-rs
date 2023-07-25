@@ -15,7 +15,6 @@ use libz_sys::{
     Z_NO_FLUSH,
     Z_FINISH,
 };
-use log::info;
 
 pub struct Encoder {
     input: Box<dyn Read>,
@@ -85,10 +84,8 @@ impl Encoder {
     }
 
     pub fn cleanup(&mut self) {
-        info!("Encoder cleaning up");
         if self.initialized {
             unsafe { deflateEnd(&mut *self.stream as z_streamp) };
-            info!("Deflate end called.");
         }
         self.initialized = false;
     }
