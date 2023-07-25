@@ -13,3 +13,7 @@ This crate makes no assumptions about the underlying stream data availability, a
 This allows a better flow control of the encoding / decoding process, in such cases where data may take a longer time to reach the component that is performing it, such as streaming data through unreliable networks.
 
 One side-effect of the above, however, is that the Encoder implementation requires an explicit notification about when the data stream has ended, as it is not able to tell just by reading 0 bytes from the underlying stream. The `Encoder.finish` method is provided to allow for that.
+
+## Documentation
+
+TODO. For now you can check out the `decoder.rs` and `encoder.rs` source files.
