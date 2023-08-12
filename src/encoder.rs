@@ -1,20 +1,12 @@
+use libz_sys::{
+    deflate, deflateEnd, deflateInit2_, z_stream, z_streamp, zlibVersion, Z_FINISH, Z_NO_FLUSH,
+    Z_OK, Z_STREAM_END,
+};
 use std::io::prelude::*;
-use std::io::{Result, Error, ErrorKind};
+use std::io::{Error, ErrorKind, Result};
+use std::mem::size_of;
 use std::ops::Drop;
 use std::ptr::null_mut;
-use std::mem::size_of;
-use libz_sys::{
-    z_stream,
-    z_streamp,
-    deflateInit2_,
-    deflate,
-    deflateEnd,
-    zlibVersion,
-    Z_OK,
-    Z_STREAM_END,
-    Z_NO_FLUSH,
-    Z_FINISH,
-};
 
 pub struct Encoder {
     input: Box<dyn Read>,
@@ -54,10 +46,11 @@ impl Encoder {
             }),
             finish: false,
             is_done: false,
-            buffer: vec!(0; size),
+            buffer: vec![0; size],
             bytes_in: Vec::<u8>::new(),
             bytes_out: Vec::<u8>::new(),
-        }.initialize()
+        }
+        .initialize()
     }
 
     pub fn stream(&mut self) -> &mut z_stream {
@@ -92,17 +85,19 @@ impl Encoder {
 
     pub fn initialize(mut self) -> Self {
         if !self.initialized {
-            self.initialized = Z_OK == unsafe {
-                deflateInit2_(
-                    &mut *self.stream as z_streamp,
-                    1, // level
-                    8, // method, Z_DEFLATED
-                    31, // window bits, 15 = 2ˆ15 window size + gzip headers (16)
-                    9, // mem level, MAX_MEM_LEVEL
-                    0, // strategy, Z_DEFAULT_STRATEGY,
-                    zlibVersion(),
-                    size_of::<z_stream>() as i32)
-            };
+            self.initialized = Z_OK
+                == unsafe {
+                    deflateInit2_(
+                        &mut *self.stream as z_streamp,
+                        1,  // level
+                        8,  // method, Z_DEFLATED
+                        31, // window bits, 15 = 2ˆ15 window size + gzip headers (16)
+                        9,  // mem level, MAX_MEM_LEVEL
+                        0,  // strategy, Z_DEFAULT_STRATEGY,
+                        zlibVersion(),
+                        size_of::<z_stream>() as i32,
+                    )
+                };
         };
 
         self
@@ -123,12 +118,14 @@ impl Read for Encoder {
             Ok(bytes) => {
                 self.bytes_in.extend(&inner_buf[0..bytes]);
                 bytes
-            },
-            Err(e) =>  { return Err(e); },
+            }
+            Err(e) => {
+                return Err(e);
+            }
         };
 
-        if bytes == 0  && !self.finish {
-            return Ok(0)
+        if bytes == 0 && !self.finish {
+            return Ok(0);
         }
 
         let flush = {
@@ -146,7 +143,7 @@ impl Read for Encoder {
 
         let result = unsafe { deflate(&mut *self.stream as z_streamp, flush) };
 
-        if Z_OK ==  result || Z_STREAM_END == result {
+        if Z_OK == result || Z_STREAM_END == result {
             self.is_done = Z_STREAM_END == result;
             let compressed = self.stream.total_out - previous_out;
             self.bytes_out.extend(&buf[0..compressed as usize]);
@@ -158,10 +155,13 @@ impl Read for Encoder {
                 libz_sys::Z_STREAM_ERROR => "Z_STREAM_ERROR".to_owned(),
                 libz_sys::Z_NEED_DICT => "Z_BUFF_ERROR".to_owned(),
                 libz_sys::Z_DATA_ERROR => "Z_DATA_ERROR".to_owned(),
-                _ =>  format!("UNKNOWN; error code {}", result),
+                _ => format!("UNKNOWN; error code {}", result),
             };
 
-            Err(Error::new(ErrorKind::Other, format!("Failed deflating: {}", error)))
+            Err(Error::new(
+                ErrorKind::Other,
+                format!("Failed deflating: {}", error),
+            ))
         }
     }
 }

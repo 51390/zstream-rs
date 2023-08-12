@@ -1,6 +1,6 @@
 extern crate libc;
 
-use libz_sys::{ uInt, voidpf };
+use libz_sys::{uInt, voidpf};
 
 pub unsafe extern "C" fn zalloc(_: voidpf, n: uInt, c: uInt) -> voidpf {
     libc::calloc(n as usize, c as usize)

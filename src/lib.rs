@@ -7,19 +7,22 @@ pub use encoder::Encoder;
 
 #[cfg(test)]
 mod tests {
-    use log::{error};
-    use std::fs::{OpenOptions};
-    use std::io::prelude::*;
     use super::*;
+    use log::error;
+    use std::fs::OpenOptions;
+    use std::io::prelude::*;
 
     #[test]
     fn test_decoder() {
-        let f = std::fs::OpenOptions::new().read(true).open("test/data/main.js.gz").unwrap();
+        let f = std::fs::OpenOptions::new()
+            .read(true)
+            .open("test/data/main.js.gz")
+            .unwrap();
         let mut decoder = Decoder::new(f);
         let mut output = Vec::<u8>::new();
 
         loop {
-            let mut buffer : [u8;1024 * 1024] = [0; 1024 * 1024];
+            let mut buffer: [u8; 1024 * 1024] = [0; 1024 * 1024];
             match decoder.read(&mut buffer) {
                 Ok(bytes) => {
                     if bytes > 0 {
@@ -29,7 +32,7 @@ mod tests {
                     if decoder.is_done() {
                         break;
                     }
-                },
+                }
                 Err(e) => {
                     error!("{}", e);
                     assert!(false, "{}", e);
@@ -37,15 +40,22 @@ mod tests {
             }
         }
 
-        let mut output_file = OpenOptions::new().write(true).create(true).open("/tmp/out.txt").unwrap();
+        let mut output_file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open("/tmp/out.txt")
+            .unwrap();
         output_file.write_all(output.as_slice()).unwrap();
     }
 
     #[test]
     fn test_encoder() {
-        let f = std::fs::OpenOptions::new().read(true).open("test/data/test.txt").unwrap();
+        let f = std::fs::OpenOptions::new()
+            .read(true)
+            .open("test/data/test.txt")
+            .unwrap();
         let mut encoder = Box::new(Encoder::new(Box::new(f)));
-        let mut buffer : [u8;1024 * 1024] = [0; 1024 * 1024];
+        let mut buffer: [u8; 1024 * 1024] = [0; 1024 * 1024];
         let mut output = Vec::<u8>::new();
 
         loop {
@@ -60,7 +70,7 @@ mod tests {
                     if encoder.is_done() {
                         break;
                     }
-                },
+                }
                 Err(e) => {
                     error!("{}", e);
                     assert!(false, "{}", e);
@@ -70,26 +80,28 @@ mod tests {
 
         println!("Finishing encoder now");
 
-        match encoder.finish(&mut buffer)  {
+        match encoder.finish(&mut buffer) {
             Ok(bytes) => {
                 if bytes > 0 {
                     output.extend(&buffer[0..bytes]);
                 }
-            },
+            }
             Err(e) => {
                 error!("{}", e);
                 assert!(false, "{}", e);
             }
         }
 
-
-        let mut output_file = OpenOptions::new().write(true).create(true).open("/tmp/out.gz").unwrap();
+        let mut output_file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open("/tmp/out.gz")
+            .unwrap();
         output_file.write_all(output.as_slice()).unwrap();
     }
 
     #[test]
     fn test_encode_decode() {
-
         struct TestReader {
             test_data: Vec<u8>,
             cursor: usize,
@@ -101,7 +113,12 @@ mod tests {
                 if n > 0 {
                     buf[0..n].copy_from_slice(&self.test_data[self.cursor..self.cursor + n]);
                     self.cursor += n;
-                    println!("{} bytes from test data consumed, cursor is now at {}. Total {} bytes.", n, self.cursor, self.test_data.len());
+                    println!(
+                        "{} bytes from test data consumed, cursor is now at {}. Total {} bytes.",
+                        n,
+                        self.cursor,
+                        self.test_data.len()
+                    );
                     Ok(n)
                 } else {
                     Ok(0)
@@ -109,10 +126,13 @@ mod tests {
             }
         }
 
-        let input: Vec<u8> = vec!(0; 256);
+        let input: Vec<u8> = vec![0; 256];
         let mut output = Vec::<u8>::new();
-        let mut encoder = Encoder::new(TestReader { test_data: input.clone(), cursor: 0 });
-        let mut buffer : [u8; 128 * 1024] = [0; 128 * 1024];
+        let mut encoder = Encoder::new(TestReader {
+            test_data: input.clone(),
+            cursor: 0,
+        });
+        let mut buffer: [u8; 128 * 1024] = [0; 128 * 1024];
 
         loop {
             // FIXME: improve this loop by not assuming the encoder will only
@@ -129,7 +149,7 @@ mod tests {
                     if encoder.is_done() {
                         break;
                     }
-                },
+                }
                 Err(e) => {
                     error!("{}", e);
                     assert!(false, "{}", e);
@@ -137,13 +157,13 @@ mod tests {
             }
         }
 
-        match encoder.finish(&mut buffer)  {
+        match encoder.finish(&mut buffer) {
             Ok(bytes) => {
                 println!("Encoded {} bytes (finish).", bytes);
                 if bytes > 0 {
                     output.extend(&buffer[0..bytes]);
                 }
-            },
+            }
             Err(e) => {
                 error!("{}", e);
                 assert!(false, "{}", e);
@@ -152,7 +172,10 @@ mod tests {
 
         println!("Output buffer len: {}", output.len());
 
-        let encoded = TestReader { test_data: output.clone(), cursor: 0 };
+        let encoded = TestReader {
+            test_data: output.clone(),
+            cursor: 0,
+        };
         let mut decoder = Decoder::new(encoded);
         output.clear();
 
@@ -167,7 +190,7 @@ mod tests {
                     if decoder.is_done() {
                         break;
                     }
-                },
+                }
                 Err(e) => {
                     error!("{}", e);
                     assert!(false, "{}", e);

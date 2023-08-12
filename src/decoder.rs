@@ -1,18 +1,11 @@
-use std::io::prelude::*;
-use std::io::{Result, Error, ErrorKind};
-use std::ptr::null_mut;
-use std::mem::size_of;
 use libz_sys::{
-    z_stream,
-    z_streamp,
-    inflateInit2_,
-    inflate,
-    inflateEnd,
-    zlibVersion,
-    Z_OK,
+    inflate, inflateEnd, inflateInit2_, z_stream, z_streamp, zlibVersion, Z_NO_FLUSH, Z_OK,
     Z_STREAM_END,
-    Z_NO_FLUSH,
 };
+use std::io::prelude::*;
+use std::io::{Error, ErrorKind, Result};
+use std::mem::size_of;
+use std::ptr::null_mut;
 
 pub struct Decoder {
     input: Box<dyn Read>,
@@ -50,10 +43,11 @@ impl Decoder {
                 reserved: 0,
             }),
             is_done: false,
-            buffer: vec!(0; size),
+            buffer: vec![0; size],
             bytes_in: Vec::<u8>::new(),
             bytes_out: Vec::<u8>::new(),
-        }.initialize()
+        }
+        .initialize()
     }
 
     pub fn stream(&mut self) -> &mut z_stream {
@@ -87,9 +81,15 @@ impl Decoder {
 
     pub fn initialize(mut self) -> Self {
         if !self.initialized {
-            self.initialized = Z_OK == unsafe {
-                inflateInit2_(&mut *self.stream as z_streamp, 32+15, zlibVersion(), size_of::<z_stream>() as i32)
-            };
+            self.initialized = Z_OK
+                == unsafe {
+                    inflateInit2_(
+                        &mut *self.stream as z_streamp,
+                        32 + 15,
+                        zlibVersion(),
+                        size_of::<z_stream>() as i32,
+                    )
+                };
         };
 
         self
@@ -113,14 +113,15 @@ impl Read for Decoder {
             Ok(bytes) => {
                 self.bytes_in.extend(&inner_buf[0..bytes]);
                 bytes
-            },
-            Err(e) =>  { return Err(e); },
+            }
+            Err(e) => {
+                return Err(e);
+            }
         };
 
         if bytes == 0 {
             return Ok(0);
         }
-
 
         self.stream.next_in = inner_buf.as_mut_ptr();
         self.stream.avail_in = bytes as u32;
@@ -129,7 +130,7 @@ impl Read for Decoder {
 
         let result = unsafe { inflate(&mut *self.stream as z_streamp, Z_NO_FLUSH) };
 
-        if Z_OK ==  result || Z_STREAM_END == result {
+        if Z_OK == result || Z_STREAM_END == result {
             self.is_done = Z_STREAM_END == result;
             let decompressed = self.stream.total_out - previous_out;
             self.bytes_out.extend(&buf[0..decompressed as usize]);
@@ -141,12 +142,13 @@ impl Read for Decoder {
                 libz_sys::Z_STREAM_ERROR => "Z_STREAM_ERROR".to_owned(),
                 libz_sys::Z_NEED_DICT => "Z_BUFF_ERROR".to_owned(),
                 libz_sys::Z_DATA_ERROR => "Z_DATA_ERROR".to_owned(),
-                _ =>  format!("UNKNOWN; error code {}", result),
+                _ => format!("UNKNOWN; error code {}", result),
             };
 
-            Err(Error::new(ErrorKind::Other, format!("Failed inflating: {}", error)))
+            Err(Error::new(
+                ErrorKind::Other,
+                format!("Failed inflating: {}", error),
+            ))
         }
     }
 }
-
-
