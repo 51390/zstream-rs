@@ -14,7 +14,7 @@ mod tests {
 
     #[test]
     fn test_decoder() {
-        let f = std::fs::OpenOptions::new()
+        let mut f = std::fs::OpenOptions::new()
             .read(true)
             .open("test/data/main.js.gz")
             .unwrap();
@@ -40,12 +40,8 @@ mod tests {
             }
         }
 
-        let mut output_file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .open("/tmp/out.txt")
-            .unwrap();
-        output_file.write_all(output.as_slice()).unwrap();
+        let original = std::fs::read("test/data/main.js").unwrap();
+        assert_eq!(original, output);
     }
 
     #[test]
@@ -92,12 +88,8 @@ mod tests {
             }
         }
 
-        let mut output_file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .open("/tmp/out.gz")
-            .unwrap();
-        output_file.write_all(output.as_slice()).unwrap();
+        let original = std::fs::read("test/data/test.gz").unwrap();
+        assert_eq!(original, output);
     }
 
     #[test]
